@@ -3,9 +3,10 @@ import psycopg2.extras
 import time
 import requests
 from datetime import datetime, timezone
+import os
 
-DB = "host=127.0.0.1 port=5433 dbname=smartqueue user=sq password=anything"
-PREDICTOR_URL = "http://localhost:8001"
+DB = os.getenv("DB_URL", "host=127.0.0.1 port=5433 dbname=smartqueue user=sq password=anything")
+PREDICTOR_URL = os.getenv("PREDICTOR_URL", "http://localhost:8001")
 WORKER_ID = "worker-1"
 POLL_INTERVAL = 3
 

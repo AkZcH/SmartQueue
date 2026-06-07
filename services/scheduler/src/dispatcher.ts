@@ -2,11 +2,8 @@ import { Pool } from "pg";
 import { PriorityQueue, Job } from "./queue";
 
 const pool = new Pool({
-  host: "127.0.0.1",
-  port: 5433,
-  database: "smartqueue",
-  user: "sq",
-  password: "anything",
+  connectionString:
+    process.env.DB_URL || "postgresql://sq:anything@127.0.0.1:5433/smartqueue",
 });
 
 export class Dispatcher {

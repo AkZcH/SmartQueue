@@ -5,10 +5,11 @@ from app.routers.auth import get_current_user
 import json
 import requests
 import psycopg2.extras
+import os
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
-PREDICTOR_URL = "http://localhost:8001"
+PREDICTOR_URL = os.getenv("PREDICTOR_URL", "http://localhost:8001")
 
 def get_ml_priority(job_type: str, recent_types: list) -> float:
     try:

@@ -6,6 +6,7 @@
     "esModuleInterop": true,
     "outDir": "./dist",
     "rootDir": "./src",
-    "strict": false
+    "strict": false,
+    "types": ["node"]
   }
 }

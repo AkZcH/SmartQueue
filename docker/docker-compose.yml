@@ -1,5 +1,5 @@
 services:
-  postgres:
+  db:
     image: postgres:16
     environment:
       POSTGRES_DB: smartqueue
@@ -10,6 +10,70 @@ services:
       - "5433:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
+      - ../db/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sq -d smartqueue"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  predictor:
+    build: ../services/predictor
+    ports:
+      - "8001:8001"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  api:
+    build: ../services/api
+    ports:
+      - "8000:8000"
+    environment:
+      DB_URL: postgresql://sq:sq_pass@db:5432/smartqueue
+      PREDICTOR_URL: http://predictor:8001
+      JWT_SECRET: changeme-in-production
+    depends_on:
+      db:
+        condition: service_healthy
+      predictor:
+        condition: service_healthy
+
+  worker:
+    build: ../services/worker
+    environment:
+      DB_URL: postgresql://sq:sq_pass@db:5432/smartqueue
+      PREDICTOR_URL: http://predictor:8001
+    depends_on:
+      db:
+        condition: service_healthy
+      predictor:
+        condition: service_healthy
+
+  scheduler:
+    build: ../services/scheduler
+    environment:
+      DB_URL: postgresql://sq:sq_pass@db:5432/smartqueue
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: ../frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    depends_on:
+      - api
 
 volumes:
   pg_data:
