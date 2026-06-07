@@ -15,6 +15,7 @@ import {
   Scatter,
 } from "recharts";
 import Link from "next/link";
+import Topbar from "../components/Topbar";
 
 const API = "http://localhost:8000";
 
@@ -126,61 +127,12 @@ export default function Analytics() {
         .type-val-label { font-size: 10px; color: var(--text3); font-family: var(--mono); margin-bottom: 2px; }
         .type-val-num { font-size: 13px; font-family: var(--mono); color: var(--text); }
         .scatter-dot { opacity: 0.7; }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+@keyframes slideUp { from{transform:translateY(4px);opacity:0} to{transform:translateY(0);opacity:1} }
       `}</style>
 
       <div className="app">
-        <div className="topbar">
-          <div className="logo">
-            <div
-              style={{
-                width: 22,
-                height: 22,
-                background: "var(--text)",
-                borderRadius: 5,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <rect x="1" y="1" width="4" height="4" fill="#0a0a0a" />
-                <rect
-                  x="7"
-                  y="1"
-                  width="4"
-                  height="4"
-                  fill="#0a0a0a"
-                  opacity="0.6"
-                />
-                <rect
-                  x="1"
-                  y="7"
-                  width="4"
-                  height="4"
-                  fill="#0a0a0a"
-                  opacity="0.6"
-                />
-                <rect
-                  x="7"
-                  y="7"
-                  width="4"
-                  height="4"
-                  fill="#0a0a0a"
-                  opacity="0.3"
-                />
-              </svg>
-            </div>
-            SmartQueue
-          </div>
-          <div className="nav">
-            <Link href="/" className="nav a">
-              Queue
-            </Link>
-            <Link href="/analytics" className="nav a active">
-              Analytics
-            </Link>
-          </div>
-        </div>
+        <Topbar active="analytics" />
 
         {/* Summary Metrics */}
         {summary && (

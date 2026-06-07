@@ -50,15 +50,39 @@ def list_jobs(status: str | None = None, user=Depends(get_current_user)):
     with get_db() as conn:
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         if user['role'] == 'admin':
+            # Global admin sees everything
             if status:
                 cur.execute("SELECT * FROM jobs WHERE status=%s ORDER BY created_at DESC", (status,))
             else:
                 cur.execute("SELECT * FROM jobs ORDER BY created_at DESC LIMIT 50")
         else:
-            if status:
-                cur.execute("SELECT * FROM jobs WHERE user_id=%s AND status=%s ORDER BY created_at DESC", (user['sub'], status))
+            # Get user's org_id
+            cur.execute("SELECT org_id FROM users WHERE id = %s", (user['sub'],))
+            row = cur.fetchone()
+            org_id = row['org_id'] if row else None
+
+            if org_id:
+                # Org member sees all jobs in their org
+                if status:
+                    cur.execute("""
+                        SELECT j.* FROM jobs j
+                        JOIN users u ON j.user_id = u.id
+                        WHERE u.org_id = %s AND j.status = %s
+                        ORDER BY j.created_at DESC
+                    """, (org_id, status))
+                else:
+                    cur.execute("""
+                        SELECT j.* FROM jobs j
+                        JOIN users u ON j.user_id = u.id
+                        WHERE u.org_id = %s
+                        ORDER BY j.created_at DESC LIMIT 50
+                    """, (org_id,))
             else:
-                cur.execute("SELECT * FROM jobs WHERE user_id=%s ORDER BY created_at DESC LIMIT 50", (user['sub'],))
+                # No org — sees only own jobs
+                if status:
+                    cur.execute("SELECT * FROM jobs WHERE user_id=%s AND status=%s ORDER BY created_at DESC", (user['sub'], status))
+                else:
+                    cur.execute("SELECT * FROM jobs WHERE user_id=%s ORDER BY created_at DESC LIMIT 50", (user['sub'],))
         return [dict(r) for r in cur.fetchall()]
 
 @router.get("/{job_id}", response_model=JobResponse)
@@ -68,7 +92,19 @@ def get_job(job_id: str, user=Depends(get_current_user)):
         if user['role'] == 'admin':
             cur.execute("SELECT * FROM jobs WHERE id=%s", (job_id,))
         else:
-            cur.execute("SELECT * FROM jobs WHERE id=%s AND user_id=%s", (job_id, user['sub']))
+            cur.execute("SELECT org_id FROM users WHERE id = %s", (user['sub'],))
+            row = cur.fetchone()
+            org_id = row['org_id'] if row else None
+
+            if org_id:
+                cur.execute("""
+                    SELECT j.* FROM jobs j
+                    JOIN users u ON j.user_id = u.id
+                    WHERE j.id = %s AND u.org_id = %s
+                """, (job_id, org_id))
+            else:
+                cur.execute("SELECT * FROM jobs WHERE id=%s AND user_id=%s", (job_id, user['sub']))
+
         row = cur.fetchone()
         if not row:
             raise HTTPException(status_code=404, detail="Job not found")

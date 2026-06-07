@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Link from "next/link";
+import Topbar from "./components/Topbar";
 
 // Attach JWT token to every request
 axios.interceptors.request.use((config) => {
@@ -512,38 +513,8 @@ export default function Home() {
       <div className="app">
         {/* Topbar */}
         <div className="topbar">
-          <div className="logo">
-            <div className="logo-icon">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <rect x="1" y="1" width="4" height="4" fill="currentColor" />
-                <rect
-                  x="7"
-                  y="1"
-                  width="4"
-                  height="4"
-                  fill="currentColor"
-                  opacity="0.6"
-                />
-                <rect
-                  x="1"
-                  y="7"
-                  width="4"
-                  height="4"
-                  fill="currentColor"
-                  opacity="0.6"
-                />
-                <rect
-                  x="7"
-                  y="7"
-                  width="4"
-                  height="4"
-                  fill="currentColor"
-                  opacity="0.3"
-                />
-              </svg>
-            </div>
-            SmartQueue
-          </div>
+          {/* Topbar */}
+          <Topbar active="queue" />
           <div style={{ display: "flex", gap: 4 }}>
             <Link
               href="/"
