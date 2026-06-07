@@ -1,12 +1,34 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing import Any, Optional
 from uuid import UUID
 from datetime import datetime
+from enum import Enum
+
+class JobType(str, Enum):
+    etl = "etl"
+    ml = "ml"
+    http = "http"
+    shell = "shell"
 
 class JobCreate(BaseModel):
     name: str
-    type: str        # etl | ml | http | shell
+    type: JobType
     payload: dict[str, Any]
+
+    @field_validator('name')
+    @classmethod
+    def name_valid(cls, v):
+        v = v.strip()
+        if len(v) < 1 or len(v) > 64:
+            raise ValueError('Job name must be 1-64 characters')
+        return v
+
+    @field_validator('payload')
+    @classmethod
+    def payload_valid(cls, v):
+        if len(str(v)) > 10000:
+            raise ValueError('Payload too large')
+        return v
 
 class JobResponse(BaseModel):
     id: UUID
