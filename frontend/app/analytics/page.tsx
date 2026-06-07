@@ -36,6 +36,15 @@ interface Summary {
   prediction_mape_pct: number | null;
 }
 
+interface Worker {
+  worker_id: string;
+  hostname: string;
+  status: string;
+  last_seen: string;
+  jobs_processed: number;
+  seconds_since_heartbeat: number;
+}
+
 const TYPE_COLORS: Record<string, string> = {
   etl: "#3b82f6",
   ml: "#a855f7",
@@ -50,6 +59,7 @@ export default function Analytics() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [throughput, setThroughput] = useState<any[]>([]);
   const [accuracy, setAccuracy] = useState<any[]>([]);
+  const [workers, setWorkers] = useState<Worker[]>([]);
 
   useEffect(() => {
     axios.get(`${API}/analytics/summary`).then((r) => setSummary(r.data));
@@ -67,6 +77,13 @@ export default function Analytics() {
     axios
       .get(`${API}/analytics/prediction-accuracy`)
       .then((r) => setAccuracy(r.data));
+
+    const token = localStorage.getItem("token");
+    axios
+      .get(`${API}/jobs/workers`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((r) => setWorkers(r.data));
   }, []);
 
   return (
@@ -344,6 +361,131 @@ export default function Analytics() {
                   ))}
                 </ScatterChart>
               </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+        {/* Worker Registry */}
+        <div className="card" style={{ marginTop: 16 }}>
+          <div
+            className="card-header"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <div className="card-title">Worker Pool</div>
+            <span
+              style={{
+                fontSize: 11,
+                fontFamily: "var(--mono)",
+                color: "var(--text3)",
+              }}
+            >
+              {workers.filter((w) => w.seconds_since_heartbeat < 15).length}{" "}
+              active
+            </span>
+          </div>
+          <div className="card-body" style={{ padding: 0 }}>
+            {workers.length === 0 ? (
+              <div className="empty">No workers registered</div>
+            ) : (
+              workers.map((w) => {
+                const alive = w.seconds_since_heartbeat < 15;
+                return (
+                  <div
+                    key={w.worker_id}
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "12px 1fr 80px 80px 60px",
+                      alignItems: "center",
+                      gap: 16,
+                      padding: "12px 20px",
+                      borderBottom: "1px solid var(--border)",
+                    }}
+                  >
+                    {/* Live dot */}
+                    <div
+                      style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: "50%",
+                        background: alive ? "#4ade80" : "#52525b",
+                        boxShadow: alive ? "0 0 6px #4ade80" : "none",
+                        animation: alive
+                          ? "blink 2s ease-in-out infinite"
+                          : "none",
+                      }}
+                    />
+                    {/* Worker ID + hostname */}
+                    <div>
+                      <div
+                        style={{
+                          fontSize: 12,
+                          fontFamily: "var(--mono)",
+                          color: "var(--text)",
+                        }}
+                      >
+                        {w.worker_id}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 11,
+                          fontFamily: "var(--mono)",
+                          color: "var(--text3)",
+                          marginTop: 2,
+                        }}
+                      >
+                        {w.hostname}
+                      </div>
+                    </div>
+                    {/* Status */}
+                    <div
+                      style={{
+                        fontSize: 11,
+                        fontFamily: "var(--mono)",
+                        color: alive ? "#4ade80" : "#52525b",
+                        textAlign: "right",
+                      }}
+                    >
+                      {alive ? "active" : "offline"}
+                    </div>
+                    {/* Jobs processed */}
+                    <div style={{ textAlign: "right" }}>
+                      <div
+                        style={{
+                          fontSize: 10,
+                          color: "var(--text3)",
+                          fontFamily: "var(--mono)",
+                          marginBottom: 2,
+                        }}
+                      >
+                        jobs done
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 13,
+                          fontFamily: "var(--mono)",
+                          color: "var(--text)",
+                        }}
+                      >
+                        {w.jobs_processed}
+                      </div>
+                    </div>
+                    {/* Last heartbeat */}
+                    <div
+                      style={{
+                        fontSize: 11,
+                        fontFamily: "var(--mono)",
+                        color: "var(--text3)",
+                        textAlign: "right",
+                      }}
+                    >
+                      {alive ? `${w.seconds_since_heartbeat}s ago` : "dead"}
+                    </div>
+                  </div>
+                );
+              })
             )}
           </div>
         </div>
