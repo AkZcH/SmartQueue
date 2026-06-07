@@ -86,7 +86,7 @@ jobs:
 
       - name: Install Python deps
         run: |
-          pip install fastapi uvicorn psycopg2-binary requests pydantic python-dotenv
+          pip install fastapi uvicorn psycopg2-binary requests pydantic python-dotenv slowapi
 
       - name: Check API imports
         run: |
