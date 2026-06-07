@@ -109,3 +109,16 @@ def get_job(job_id: str, user=Depends(get_current_user)):
         if not row:
             raise HTTPException(status_code=404, detail="Job not found")
         return dict(row)
+    
+@router.get("/workers")
+def list_workers(user=Depends(get_current_user)):
+    with get_db() as conn:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("""
+            SELECT worker_id, hostname, started_at, last_seen,
+                   jobs_processed, status,
+                   EXTRACT(EPOCH FROM (now() - last_seen))::int AS seconds_since_heartbeat
+            FROM worker_registry
+            ORDER BY started_at DESC
+        """)
+        return [dict(r) for r in cur.fetchall()]

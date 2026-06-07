@@ -6,4 +6,4 @@ RUN pip install --no-cache-dir psycopg2-binary requests
 
 COPY . .
 
-CMD ["python", "worker.py"]
+CMD ["python", "-u", "worker.py"]
