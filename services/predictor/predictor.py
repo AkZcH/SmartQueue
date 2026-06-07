@@ -117,7 +117,7 @@ class LSTMPredictor:
 
     def predict(self, X):
         y_pred, _, _, _ = self.forward(X)
-        return float(y_pred)
+        return float(y_pred.flatten()[0])
 
     def save(self, path="model.npz"):
         np.savez(path,
