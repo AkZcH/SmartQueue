@@ -7,4 +7,5 @@ RUN npm install
 
 COPY . .
 
+RUN chmod +x node_modules/.bin/ts-node
 CMD ["npx", "ts-node", "src/index.ts"]

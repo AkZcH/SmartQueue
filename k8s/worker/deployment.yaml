@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  namespace: smartqueue
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: worker
+  template:
+    metadata:
+      labels:
+        app: worker
+    spec:
+      containers:
+        - name: worker
+          image: de4dl0ck/smartqueue-worker:latest
+          env:
+            - name: DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: smartqueue-secrets
+                  key: db-url
+            - name: PREDICTOR_URL
+              valueFrom:
+                secretKeyRef:
+                  name: smartqueue-secrets
+                  key: predictor-url
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"

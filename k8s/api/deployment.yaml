@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: smartqueue
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+        - name: api
+          image: de4dl0ck/smartqueue-api:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: smartqueue-secrets
+                  key: db-url
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: smartqueue-secrets
+                  key: jwt-secret
+            - name: PREDICTOR_URL
+              valueFrom:
+                secretKeyRef:
+                  name: smartqueue-secrets
+                  key: predictor-url
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
