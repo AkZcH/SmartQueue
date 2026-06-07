@@ -20,3 +20,4 @@ class JobResponse(BaseModel):
     finished_at: Optional[datetime]
     retry_count: int
     error_msg: Optional[str]
+    user_id: Optional[UUID] = None

@@ -19,3 +19,5 @@ CREATE TABLE execution_logs (
   worker_id   TEXT,
   logged_at   TIMESTAMPTZ DEFAULT now()
 );
+
+ALTER TABLE execution_logs ADD COLUMN predicted_runtime_ms INT;
