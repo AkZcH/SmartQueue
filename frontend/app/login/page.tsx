@@ -20,8 +20,12 @@ export default function Login() {
       const res = await axios.post(`${API}${endpoint}`, { username, password });
       localStorage.setItem("token", res.data.token);
       window.location.href = "/";
-    } catch (err: any) {
-      setError(err.response?.data?.detail ?? "Something went wrong");
+    } catch (err: unknown) {
+      if (axios.isAxiosError<{ detail?: string }>(err)) {
+        setError(err.response?.data?.detail ?? "Something went wrong");
+      } else {
+        setError("Something went wrong");
+      }
     }
     setLoading(false);
   };
@@ -29,124 +33,57 @@ export default function Login() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@300;400;500&family=Geist:wght@300;400;500;600&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        :root {
-          --bg: #0a0a0a; --surface: #111111; --surface2: #1a1a1a;
-          --border: #222222; --border2: #2a2a2a;
-          --text: #ededed; --text2: #a1a1aa; --text3: #52525b;
-          --font: 'Geist', sans-serif; --mono: 'Geist Mono', monospace;
-        }
-        html, body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
         .page {
-          min-height: 100vh;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 24px;
+          min-height: 100vh; display: flex; align-items: center;
+          justify-content: center; padding: 24px; background: #000000;
         }
         .card {
-          background: var(--surface);
-          border: 1px solid var(--border);
-          border-radius: 16px;
-          width: 100%;
-          max-width: 360px;
-          overflow: hidden;
+          background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 10px;
+          width: 100%; max-width: 360px; overflow: hidden;
         }
-        .card-header {
-          padding: 24px 28px 20px;
-          border-bottom: 1px solid var(--border);
-        }
+        .card-header { padding: 22px 24px 18px; border-bottom: 1px solid #1a1a1a; }
         .logo {
-          font-size: 15px;
-          font-weight: 500;
-          letter-spacing: -0.02em;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          margin-bottom: 16px;
+          font-size: 14px; font-weight: 500; display: flex;
+          align-items: center; gap: 8px; margin-bottom: 16px; color: #ededed;
+          font-family: var(--sq-font-sans);
         }
         .logo-icon {
-          width: 22px; height: 22px;
-          background: var(--text);
-          border-radius: 5px;
+          width: 20px; height: 20px; background: #ededed; border-radius: 4px;
           display: flex; align-items: center; justify-content: center;
         }
-        .logo-icon svg { color: var(--bg); }
-        .tabs {
-          display: flex;
-          gap: 4px;
-        }
+        .logo-icon svg { color: #000000; }
+        .tabs { display: flex; gap: 4px; }
         .tab {
-          flex: 1;
-          padding: 7px;
-          border-radius: 7px;
-          border: 1px solid transparent;
-          background: none;
-          font-size: 12px;
-          font-family: var(--mono);
-          color: var(--text3);
-          cursor: pointer;
-          transition: all 0.15s;
-          text-align: center;
+          flex: 1; padding: 6px; border-radius: 5px; border: 1px solid transparent;
+          background: none; font-size: 11px; font-family: var(--sq-font-mono);
+          color: #52525b; cursor: pointer; transition: all 0.15s; text-align: center;
+          text-transform: uppercase; letter-spacing: 0.04em;
         }
-        .tab.active {
-          background: var(--surface2);
-          border-color: var(--border2);
-          color: var(--text);
-        }
-        .card-body {
-          padding: 24px 28px;
-          display: flex;
-          flex-direction: column;
-          gap: 14px;
-        }
+        .tab.active { background: #111111; border-color: #222222; color: #ededed; }
+        .card-body { padding: 22px 24px; display: flex; flex-direction: column; gap: 14px; }
         .field-label {
-          font-size: 11px;
-          color: var(--text3);
-          font-family: var(--mono);
-          margin-bottom: 5px;
-          text-transform: uppercase;
-          letter-spacing: 0.06em;
+          font-size: 10px; color: #52525b; font-family: var(--sq-font-mono);
+          margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.06em;
         }
         .input {
-          width: 100%;
-          background: var(--bg);
-          border: 1px solid var(--border2);
-          border-radius: 8px;
-          padding: 9px 12px;
-          font-size: 13px;
-          color: var(--text);
-          font-family: var(--font);
-          outline: none;
-          transition: border-color 0.15s;
+          width: 100%; background: #000000; border: 1px solid #1a1a1a;
+          border-radius: 7px; padding: 9px 12px; font-size: 13px; color: #ededed;
+          font-family: var(--sq-font-sans); outline: none; transition: border-color 0.15s;
         }
-        .input:focus { border-color: #444; }
-        .input::placeholder { color: var(--text3); }
+        .input:focus { border-color: #333333; }
+        .input::placeholder { color: #52525b; }
         .submit-btn {
-          width: 100%;
-          padding: 10px;
-          border-radius: 8px;
-          border: none;
-          background: var(--text);
-          color: var(--bg);
-          font-size: 13px;
-          font-weight: 500;
-          font-family: var(--font);
-          cursor: pointer;
-          transition: opacity 0.15s;
-          letter-spacing: -0.01em;
+          width: 100%; padding: 9px; border-radius: 7px; border: none;
+          background: #ededed; color: #000000; font-size: 13px; font-weight: 600;
+          font-family: var(--sq-font-sans); cursor: pointer; transition: opacity 0.15s;
           margin-top: 4px;
         }
-        .submit-btn:hover { opacity: 0.85; }
+        .submit-btn:hover { opacity: 0.88; }
         .submit-btn:disabled { opacity: 0.3; cursor: not-allowed; }
         .error {
-          font-size: 12px;
-          font-family: var(--mono);
-          color: #f87171;
-          padding: 10px 12px;
-          background: #2d0a0a;
-          border: 1px solid #f8717133;
+          font-size: 12px; font-family: var(--sq-font-mono); color: #f87171;
+          padding: 10px 12px; background: #2d0a0a; border: 1px solid #991b1b;
           border-radius: 7px;
         }
       `}</style>
