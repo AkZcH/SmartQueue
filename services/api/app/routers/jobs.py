@@ -98,6 +98,23 @@ def list_workers(user=Depends(get_current_user)):
         """)
         return [dict(r) for r in cur.fetchall()]
 
+@router.get("/scheduler/leader")
+def get_scheduler_leader(user=Depends(get_current_user)):
+    with get_db() as conn:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("""
+            SELECT worker_id, elected_at, last_seen,
+                   EXTRACT(EPOCH FROM (now() - last_seen))::int AS seconds_since_heartbeat
+            FROM scheduler_leader
+            WHERE id = 1
+        """)
+        row = cur.fetchone()
+        if not row:
+            return {"leader": None, "status": "no leader elected"}
+        row = dict(row)
+        row['status'] = 'active' if row['seconds_since_heartbeat'] < 15 else 'stale'
+        return row
+
 @router.get("/{job_id}", response_model=JobResponse)
 def get_job(job_id: str, user=Depends(get_current_user)):
     with get_db() as conn:
