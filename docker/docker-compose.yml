@@ -41,6 +41,7 @@ services:
       DB_URL: postgresql://sq:sq_pass@db:5432/smartqueue
       PREDICTOR_URL: http://predictor:8001
       JWT_SECRET: changeme-in-production
+      ENABLE_METRICS: "true"
     depends_on:
       db:
         condition: service_healthy
@@ -75,5 +76,38 @@ services:
     depends_on:
       - api
 
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: docker-prometheus-1
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    # networks:
+    #   - smartqueue-net
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: docker-grafana-1
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+    # networks:
+    #   - smartqueue-net
+    restart: unless-stopped
+
 volumes:
   pg_data:
+  grafana-data:
+
+networks:
+  default:
+    name: smartqueue-net
