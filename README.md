@@ -1,9 +1,42 @@
 # SmartQueue — AI-Powered Adaptive Task Scheduler
 
+<p align="left">
+  <img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License" />
+  <img src="https://img.shields.io/badge/python-3.12-blue?style=flat-square&logo=python&logoColor=white" alt="Python" />
+  <img src="https://img.shields.io/badge/typescript-5.x-blue?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/next.js-15-black?style=flat-square&logo=next.js&logoColor=white" alt="Next.js" />
+  <img src="https://img.shields.io/badge/postgresql-16-336791?style=flat-square&logo=postgresql&logoColor=white" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/docker-ready-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker" />
+  <img src="https://img.shields.io/badge/kubernetes-orchestrated-326CE5?style=flat-square&logo=kubernetes&logoColor=white" alt="Kubernetes" />
+  <img src="https://img.shields.io/github/actions/workflow/status/AkZcH/SmartQueue/ci.yml?style=flat-square&label=CI%2FCD" alt="CI/CD" />
+</p>
+
 > Final Year Project | B.Tech Computer Science & Engineering
 > Akshat Chauhan | Kalinga Institute of Industrial Technology (KIIT)
 
 ---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Problem Statement](#problem-statement)
+- [Key Features](#key-features)
+- [Tech Stack](#tech-stack)
+- [System Architecture](#system-architecture)
+- [Project Structure](#project-structure)
+- [Getting Started](#getting-started)
+  - [Docker Compose](#option-1--docker-compose-recommended)
+  - [Kubernetes](#option-2--kubernetes)
+  - [Local Dev](#option-3--local-dev)
+- [Authentication & Authorization](#authentication--authorization)
+- [API Reference](#api-reference)
+- [The ML Model](#the-ml-model)
+- [Database Schema](#database-schema)
+- [Distributed Systems Design](#distributed-systems-design)
+- [CI/CD](#cicd)
+- [What Makes This Novel](#what-makes-this-novel)
+- [License](#license)
+- [Author](#author)
 
 ## Overview
 
@@ -36,6 +69,10 @@ SmartQueue solves both by training an LSTM on execution history and using predic
 - **Security hardening** — rate limiting (`slowapi`), input validation (Pydantic), CORS lockdown
 - **CI/CD** — GitHub Actions builds and pushes Docker images to Docker Hub on every push to `main`
 - **Fully containerised** — every service in Docker, orchestrated with Kubernetes
+- **Leader election** — PostgreSQL advisory locks elect a scheduler leader; standby instances take over within 2 seconds of leader failure, no ZooKeeper or etcd required
+- **Exactly-once execution** — lease-based job claiming with visibility timeouts; watchdog reclaims stuck jobs from dead workers automatically
+- **Event-driven dispatch** — PostgreSQL LISTEN/NOTIFY replaces polling; job pickup latency reduced from 2s to sub-100ms
+- **Observability** — Prometheus metrics (queue depth, worker count, prediction MAPE) exposed at `/metrics`
 
 ---
 
@@ -54,34 +91,29 @@ SmartQueue solves both by training an LSTM on execution history and using predic
 | Orchestration    | Kubernetes, kubectl, HPA               |
 | CI/CD            | GitHub Actions, Docker Hub             |
 | Rate Limiting    | slowapi                                |
+| Leader Election  | PostgreSQL Advisory Locks              |
 
 ---
 
 ## System Architecture
 
-```
-┌─────────────────┐
-│   Next.js UI    │  ← Submit jobs, view queue, analytics, profile
-└────────┬────────┘
-         │ REST + JWT
-┌────────▼────────┐
-│   FastAPI API   │  ← Auth, job CRUD, org management, analytics
-└────────┬────────┘
-         │
-    ┌────┴──────────┐
-    │               │
-┌───▼──────┐  ┌────▼────────┐
-│Scheduler │  │ML Predictor │  ← LSTM inference (port 8001)
-│(TS heap) │  │  (FastAPI)  │
-└───┬──────┘  └─────────────┘
-    │ dispatches
-┌───▼──────────────┐
-│  Worker Pool     │  ← Python workers, scales via K8s HPA (1→5 pods)
-└───┬──────────────┘
-    │
-┌───▼──────────────┐
-│   PostgreSQL     │  ← jobs, execution_logs, users, organizations
-└──────────────────┘
+```mermaid
+flowchart TD
+    UI["Next.js UI"]
+    API["FastAPI API"]
+    Scheduler["Scheduler<br/>(Leader Election)"]
+    ML["ML Predictor<br/>(FastAPI :8001)"]
+    Workers["Worker Pool"]
+    DB["PostgreSQL"]
+
+    UI -->|"REST + JWT"| API
+    API -->|"pg_notify"| Scheduler
+    API -->|"REST"| ML
+    Scheduler -->|"LISTEN new_job"| Workers
+
+    API --> DB
+    Scheduler --> DB
+    Workers --> DB
 ```
 
 ---
@@ -101,7 +133,7 @@ smartqueue/
 │       ├── analytics/    # Analytics dashboard page
 │       └── login/        # Login / register page
 ├── db/
-│   └── migrations/       # 001_init → 004_organizations
+│   └── migrations/       # 001_init → 006_leader_election
 ├── docker/
 │   └── docker-compose.yml
 ├── k8s/                  # Kubernetes manifests + HPA
@@ -237,11 +269,13 @@ curl -X POST http://localhost:8000/orgs/<org_id>/invite \
 
 ### Jobs
 
-| Method | Endpoint     | Description            |
-| ------ | ------------ | ---------------------- |
-| POST   | `/jobs/`     | Submit a job           |
-| GET    | `/jobs/`     | List jobs (org-scoped) |
-| GET    | `/jobs/{id}` | Get a specific job     |
+| Method | Endpoint                 | Description                      |
+| ------ | ------------------------ | -------------------------------- |
+| POST   | `/jobs/`                 | Submit a job                     |
+| GET    | `/jobs/`                 | List jobs (org-scoped)           |
+| GET    | `/jobs/{id}`             | Get a specific job               |
+| GET    | `/jobs/workers`          | Live worker pool status          |
+| GET    | `/jobs/scheduler/leader` | Current leader (via jobs router) |
 
 ### Organizations
 
@@ -254,11 +288,16 @@ curl -X POST http://localhost:8000/orgs/<org_id>/invite \
 
 ### Analytics
 
-| Method | Endpoint                         | Description              |
-| ------ | -------------------------------- | ------------------------ |
-| GET    | `/analytics/summary`             | Job counts, success rate |
-| GET    | `/analytics/throughput`          | Jobs per hour (last 24h) |
-| GET    | `/analytics/prediction-accuracy` | Actual vs predicted      |
+| Method | Endpoint                         | Description                   |
+| ------ | -------------------------------- | ----------------------------- |
+| GET    | `/analytics/summary`             | Job counts, success rate      |
+| GET    | `/analytics/throughput`          | Jobs per hour (last 24h)      |
+| GET    | `/analytics/prediction-accuracy` | Actual vs predicted           |
+| GET    | `/analytics/queue-depth`         | Queue depth over time         |
+| GET    | `/analytics/scheduler-leader`    | Current scheduler leader info |
+| <!--   | GET -->                          |
+
+<!-- /metrics                      Prometheus metrics endpoint -->
 
 ---
 
@@ -327,7 +366,57 @@ Shorter predicted runtime → higher priority score → job moves up the queue.
 | name       | TEXT        | Unique org name |
 | created_at | TIMESTAMPTZ | Creation time   |
 
+### `worker_registry`
+
+| Column           | Type          | Description                  |
+| ---------------- | ------------- | ---------------------------- |
+| `worker_id`      | `TEXT`        | Primary key — hostname-based |
+| `hostname`       | `TEXT`        | Container hostname           |
+| `status`         | `TEXT`        | `active` / `offline`         |
+| `last_seen`      | `TIMESTAMPTZ` | Last heartbeat               |
+| `jobs_processed` | `INT`         | Lifetime job count           |
+| `started_at`     | `TIMESTAMPTZ` | Registration time            |
+
+### `scheduler_leader`
+
+| Column       | Type          | Description                      |
+| ------------ | ------------- | -------------------------------- |
+| `id`         | `INT`         | Always `1` — single row          |
+| `worker_id`  | `TEXT`        | Current leader instance          |
+| `elected_at` | `TIMESTAMPTZ` | When this instance became leader |
+| `last_seen`  | `TIMESTAMPTZ` | Last heartbeat from leader       |
+
 ---
+
+## Distributed Systems Design
+
+### Leader Election
+
+The scheduler runs as multiple instances. On startup each instance attempts `pg_try_advisory_lock(12345)` — a PostgreSQL advisory lock. Only one instance acquires it and becomes leader. When the leader dies, PostgreSQL automatically releases the lock and a standby wins it within 2 seconds. No ZooKeeper, no etcd, no Redis required.
+
+### Exactly-Once Execution
+
+Job claiming uses `FOR UPDATE SKIP LOCKED` — PostgreSQL's primitive for contention-free concurrent access. When a worker claims a job it receives a lease (`lease_expires_at = now() + 30s`). The worker renews the lease every 10 seconds. A watchdog process scans for expired leases and requeues stuck jobs automatically.
+
+### Event-Driven Dispatch
+
+When a job is submitted the API fires `pg_notify('new_job', job_id)`. The scheduler leader holds a dedicated LISTEN connection and rebuilds the priority heap immediately on notification — no polling required. Job pickup latency dropped from 2 seconds to sub-100 milliseconds.
+
+### Fault Tolerance
+
+- Worker crashes → lease expires → watchdog requeues the job
+- Scheduler crashes → advisory lock released → standby elected within 2s
+- API crashes → stateless JWT means any replica can serve any request
+- Predictor down → worker falls back to default priority (0.5)
+
+### Concurrency Model
+
+```
+Job submitted → API → pg_notify → Scheduler (LISTEN) → heap rebuild
+                   → multiple workers competing via FOR UPDATE SKIP LOCKED
+                   → exactly one worker claims the job
+                   → lease renewed every 10s until completion
+```
 
 ## CI/CD
 
@@ -343,13 +432,19 @@ Images: `de4dl0ck/smartqueue-api`, `de4dl0ck/smartqueue-worker`, `de4dl0ck/smart
 
 ## What Makes This Novel
 
-Conventional schedulers (Celery, Airflow, BullMQ) assign priority statically — either manually or by FIFO. SmartQueue differs in three ways:
+Conventional schedulers (Celery, Airflow, BullMQ) assign priority statically. SmartQueue differs in five ways:
 
 1. **Learns runtime patterns** from execution history using a hand-built LSTM — no ML framework dependency
-2. **Org-scoped multi-tenancy** — team-aware job visibility with role-based access, not just single-user
-3. **Adaptive infrastructure** — Kubernetes HPA scales the worker layer automatically based on CPU load, no manual intervention
+2. **Genuinely distributed** — leader election via PostgreSQL advisory locks, automatic failover, lease-based exactly-once execution semantics
+3. **Event-driven** — PostgreSQL LISTEN/NOTIFY eliminates polling; jobs are dispatched within 100ms of submission
+4. **Org-scoped multi-tenancy** — team-aware job visibility with three-tier RBAC
+5. **Adaptive infrastructure** — Kubernetes HPA scales workers automatically; Prometheus exposes real-time queue and worker metrics
 
 ---
+
+## License
+
+This project is licensed under the MIT License — see the [LICENSE](./LICENSE) file for details.
 
 ## Author
 
