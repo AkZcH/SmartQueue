@@ -14,3 +14,6 @@ venv/
 # Frontend
 frontend/node_modules/
 frontend/.next/
+
+plans.md
+questions.md
