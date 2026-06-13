@@ -42,6 +42,8 @@ def create_job(job: JobCreate, user=Depends(get_current_user)):
             (job.name, job.type, json.dumps(job.payload), priority, user['sub'])
         )
         row = cur.fetchone()
+        # Notify scheduler immediately — no need to wait for 2s poll
+        cur.execute("SELECT pg_notify('new_job', %s)", (str(row['id']),))
         conn.commit()
         return dict(row)
 

@@ -109,17 +109,26 @@ async function main(): Promise<void> {
     await updateLeaderRegistry();
   }, HEARTBEAT_INTERVAL);
 
-  // Dispatch loop — only runs if leader
+  // Dispatch loop — fallback polling every 2s (LISTEN/NOTIFY is primary)
   setInterval(async () => {
     if (!isLeader) return;
     await dispatchLoop();
   }, DISPATCH_INTERVAL);
+
+  // Start LISTEN/NOTIFY when leader is elected
+  setInterval(async () => {
+    if (!isLeader) return;
+    if (!(dispatcher as any).listenClient) {
+      await dispatcher.startListening();
+    }
+  }, 1000);
 
   // Graceful shutdown
   process.on("SIGTERM", async () => {
     console.log(`[Scheduler] ${SCHEDULER_ID} shutting down...`);
     isLeader = false;
     await releaseLeader();
+    await dispatcher.stopListening();
     process.exit(0);
   });
 
@@ -127,6 +136,7 @@ async function main(): Promise<void> {
     console.log(`[Scheduler] ${SCHEDULER_ID} shutting down...`);
     isLeader = false;
     await releaseLeader();
+    await dispatcher.stopListening();
     process.exit(0);
   });
 }
