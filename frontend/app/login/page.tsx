@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 
 const API = "http://localhost:8000";
@@ -10,6 +10,11 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const submit = async () => {
     if (!username || !password) return;
@@ -33,145 +38,423 @@ export default function Login() {
   return (
     <>
       <style>{`
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        .page {
-          min-height: 100vh; display: flex; align-items: center;
-          justify-content: center; padding: 24px; background: #000000;
+        @import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap');
+
+        *, *::before, *::after {
+          box-sizing: border-box;
+          margin: 0;
+          padding: 0;
         }
-        .card {
-          background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 10px;
-          width: 100%; max-width: 360px; overflow: hidden;
+
+        .sq-page {
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #000;
+          font-family: 'Geist', system-ui, -apple-system, sans-serif;
+          position: relative;
+          overflow: hidden;
+          padding: 24px;
         }
-        .card-header { padding: 22px 24px 18px; border-bottom: 1px solid #1a1a1a; }
-        .logo {
-          font-size: 14px; font-weight: 500; display: flex;
-          align-items: center; gap: 8px; margin-bottom: 16px; color: #ededed;
-          font-family: var(--sq-font-sans);
+
+        /* Signature: radial glow orb — Vercel-style ambient light */
+        .sq-page::before {
+          content: '';
+          position: absolute;
+          top: -120px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 560px;
+          height: 400px;
+          background: radial-gradient(ellipse at center, rgba(255,255,255,0.055) 0%, transparent 70%);
+          pointer-events: none;
         }
-        .logo-icon {
-          width: 20px; height: 20px; background: #ededed; border-radius: 4px;
-          display: flex; align-items: center; justify-content: center;
+
+        .sq-card {
+          position: relative;
+          width: 100%;
+          max-width: 368px;
+          background: #0a0a0a;
+          border: 1px solid #1c1c1c;
+          border-radius: 12px;
+          overflow: hidden;
+          opacity: 0;
+          transform: translateY(8px);
+          transition: opacity 0.35s ease, transform 0.35s ease;
         }
-        .logo-icon svg { color: #000000; }
-        .tabs { display: flex; gap: 4px; }
-        .tab {
-          flex: 1; padding: 6px; border-radius: 5px; border: 1px solid transparent;
-          background: none; font-size: 11px; font-family: var(--sq-font-mono);
-          color: #52525b; cursor: pointer; transition: all 0.15s; text-align: center;
-          text-transform: uppercase; letter-spacing: 0.04em;
+
+        .sq-card.visible {
+          opacity: 1;
+          transform: translateY(0);
         }
-        .tab.active { background: #111111; border-color: #222222; color: #ededed; }
-        .card-body { padding: 22px 24px; display: flex; flex-direction: column; gap: 14px; }
-        .field-label {
-          font-size: 10px; color: #52525b; font-family: var(--sq-font-mono);
-          margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.06em;
+
+        /* Top edge shimmer line */
+        .sq-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08) 40%, rgba(255,255,255,0.08) 60%, transparent);
+          pointer-events: none;
         }
-        .input {
-          width: 100%; background: #000000; border: 1px solid #1a1a1a;
-          border-radius: 7px; padding: 9px 12px; font-size: 13px; color: #ededed;
-          font-family: var(--sq-font-sans); outline: none; transition: border-color 0.15s;
+
+        .sq-header {
+          padding: 20px 24px 0;
         }
-        .input:focus { border-color: #333333; }
-        .input::placeholder { color: #52525b; }
-        .submit-btn {
-          width: 100%; padding: 9px; border-radius: 7px; border: none;
-          background: #ededed; color: #000000; font-size: 13px; font-weight: 600;
-          font-family: var(--sq-font-sans); cursor: pointer; transition: opacity 0.15s;
+
+        .sq-brand {
+          display: flex;
+          align-items: center;
+          gap: 9px;
+          margin-bottom: 20px;
+        }
+
+        .sq-logo-mark {
+          width: 22px;
+          height: 22px;
+          flex-shrink: 0;
+        }
+
+        .sq-brand-name {
+          font-size: 13px;
+          font-weight: 500;
+          color: #ededed;
+          letter-spacing: -0.01em;
+        }
+
+        /* Tab switcher — underline style */
+        .sq-tabs {
+          display: flex;
+          border-bottom: 1px solid #1c1c1c;
+          margin: 0 -24px;
+          padding: 0 24px;
+          gap: 0;
+        }
+
+        .sq-tab {
+          position: relative;
+          padding: 10px 0;
+          margin-right: 20px;
+          background: none;
+          border: none;
+          font-size: 12px;
+          font-family: 'Geist Mono', 'Courier New', monospace;
+          font-weight: 400;
+          color: #555;
+          cursor: pointer;
+          transition: color 0.15s;
+          letter-spacing: 0.02em;
+          text-transform: lowercase;
+        }
+
+        .sq-tab::after {
+          content: '';
+          position: absolute;
+          bottom: -1px;
+          left: 0;
+          right: 0;
+          height: 1px;
+          background: #ededed;
+          opacity: 0;
+          transition: opacity 0.15s;
+        }
+
+        .sq-tab.active {
+          color: #ededed;
+        }
+
+        .sq-tab.active::after {
+          opacity: 1;
+        }
+
+        .sq-tab:hover:not(.active) {
+          color: #888;
+        }
+
+        /* Body */
+        .sq-body {
+          padding: 20px 24px 24px;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .sq-field {
+          display: flex;
+          flex-direction: column;
+          gap: 5px;
+        }
+
+        .sq-label {
+          font-size: 11px;
+          font-family: 'Geist Mono', monospace;
+          color: #444;
+          letter-spacing: 0.07em;
+          text-transform: uppercase;
+        }
+
+        .sq-input {
+          width: 100%;
+          height: 36px;
+          background: #000;
+          border: 1px solid #1c1c1c;
+          border-radius: 7px;
+          padding: 0 12px;
+          font-size: 13px;
+          font-family: 'Geist', system-ui, sans-serif;
+          color: #ededed;
+          outline: none;
+          transition: border-color 0.15s, box-shadow 0.15s;
+          -webkit-appearance: none;
+        }
+
+        .sq-input:focus {
+          border-color: #2e2e2e;
+          box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.04);
+        }
+
+        .sq-input::placeholder {
+          color: #2e2e2e;
+        }
+
+        /* Error state */
+        .sq-error {
+          display: flex;
+          align-items: flex-start;
+          gap: 8px;
+          padding: 10px 12px;
+          background: #130a0a;
+          border: 1px solid #2a1010;
+          border-radius: 7px;
+        }
+
+        .sq-error-dot {
+          width: 5px;
+          height: 5px;
+          border-radius: 50%;
+          background: #e05252;
+          flex-shrink: 0;
           margin-top: 4px;
         }
-        .submit-btn:hover { opacity: 0.88; }
-        .submit-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-        .error {
-          font-size: 12px; font-family: var(--sq-font-mono); color: #f87171;
-          padding: 10px 12px; background: #2d0a0a; border: 1px solid #991b1b;
+
+        .sq-error-text {
+          font-size: 12px;
+          font-family: 'Geist Mono', monospace;
+          color: #c97070;
+          line-height: 1.5;
+        }
+
+        /* Submit button */
+        .sq-submit {
+          width: 100%;
+          height: 36px;
           border-radius: 7px;
+          border: none;
+          background: #ededed;
+          color: #000;
+          font-size: 13px;
+          font-weight: 500;
+          font-family: 'Geist', system-ui, sans-serif;
+          letter-spacing: -0.01em;
+          cursor: pointer;
+          transition: background 0.15s, opacity 0.15s, transform 0.1s;
+          margin-top: 2px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+        }
+
+        .sq-submit:hover:not(:disabled) {
+          background: #f5f5f5;
+        }
+
+        .sq-submit:active:not(:disabled) {
+          transform: scale(0.99);
+          background: #ddd;
+        }
+
+        .sq-submit:disabled {
+          opacity: 0.25;
+          cursor: not-allowed;
+        }
+
+        /* Loading spinner */
+        .sq-spinner {
+          width: 13px;
+          height: 13px;
+          border: 1.5px solid rgba(0,0,0,0.15);
+          border-top-color: #000;
+          border-radius: 50%;
+          animation: sq-spin 0.6s linear infinite;
+        }
+
+        @keyframes sq-spin {
+          to { transform: rotate(360deg); }
+        }
+
+        /* Footer */
+        .sq-footer {
+          padding: 0 24px 18px;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .sq-footer-dot {
+          width: 3px;
+          height: 3px;
+          border-radius: 50%;
+          background: #222;
+          flex-shrink: 0;
+        }
+
+        .sq-footer-text {
+          font-size: 11px;
+          font-family: 'Geist Mono', monospace;
+          color: #333;
+          letter-spacing: 0.01em;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .sq-card { transition: none; }
+          .sq-spinner { animation: none; }
         }
       `}</style>
 
-      <div className="page">
-        <div className="card">
-          <div className="card-header">
-            <div className="logo">
-              <div className="logo-icon">
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <rect x="1" y="1" width="4" height="4" fill="currentColor" />
-                  <rect
-                    x="7"
-                    y="1"
-                    width="4"
-                    height="4"
-                    fill="currentColor"
-                    opacity="0.6"
-                  />
-                  <rect
-                    x="1"
-                    y="7"
-                    width="4"
-                    height="4"
-                    fill="currentColor"
-                    opacity="0.6"
-                  />
-                  <rect
-                    x="7"
-                    y="7"
-                    width="4"
-                    height="4"
-                    fill="currentColor"
-                    opacity="0.3"
-                  />
-                </svg>
-              </div>
-              SmartQueue
+      <div className="sq-page">
+        <div className={`sq-card ${mounted ? "visible" : ""}`}>
+          <div className="sq-header">
+            {/* Brand */}
+            <div className="sq-brand">
+              <svg
+                className="sq-logo-mark"
+                viewBox="0 0 22 22"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <rect x="1" y="1" width="9" height="9" rx="2" fill="#ededed" />
+                <rect
+                  x="12"
+                  y="1"
+                  width="9"
+                  height="9"
+                  rx="2"
+                  fill="#ededed"
+                  fillOpacity="0.45"
+                />
+                <rect
+                  x="1"
+                  y="12"
+                  width="9"
+                  height="9"
+                  rx="2"
+                  fill="#ededed"
+                  fillOpacity="0.45"
+                />
+                <rect
+                  x="12"
+                  y="12"
+                  width="9"
+                  height="9"
+                  rx="2"
+                  fill="#ededed"
+                  fillOpacity="0.18"
+                />
+              </svg>
+              <span className="sq-brand-name">SmartQueue</span>
             </div>
-            <div className="tabs">
+
+            {/* Tabs */}
+            <div className="sq-tabs">
               <button
-                className={`tab ${mode === "login" ? "active" : ""}`}
-                onClick={() => setMode("login")}
+                className={`sq-tab ${mode === "login" ? "active" : ""}`}
+                onClick={() => {
+                  setMode("login");
+                  setError("");
+                }}
               >
                 login
               </button>
               <button
-                className={`tab ${mode === "register" ? "active" : ""}`}
-                onClick={() => setMode("register")}
+                className={`sq-tab ${mode === "register" ? "active" : ""}`}
+                onClick={() => {
+                  setMode("register");
+                  setError("");
+                }}
               >
                 register
               </button>
             </div>
           </div>
-          <div className="card-body">
-            <div>
-              <div className="field-label">Username</div>
+
+          <div className="sq-body">
+            <div className="sq-field">
+              <label className="sq-label">Username</label>
               <input
-                className="input"
+                className="sq-input"
                 placeholder="akshat"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && submit()}
+                autoComplete="username"
+                autoFocus
               />
             </div>
-            <div>
-              <div className="field-label">Password</div>
+
+            <div className="sq-field">
+              <label className="sq-label">Password</label>
               <input
-                className="input"
+                className="sq-input"
                 type="password"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && submit()}
+                autoComplete={
+                  mode === "login" ? "current-password" : "new-password"
+                }
               />
             </div>
-            {error && <div className="error">{error}</div>}
+
+            {error && (
+              <div className="sq-error" role="alert">
+                <div className="sq-error-dot" />
+                <span className="sq-error-text">{error}</span>
+              </div>
+            )}
+
             <button
-              className="submit-btn"
+              className="sq-submit"
               onClick={submit}
               disabled={loading || !username || !password}
             >
-              {loading
-                ? "..."
-                : mode === "login"
-                  ? "Sign in →"
-                  : "Create account →"}
+              {loading ? (
+                <>
+                  <div className="sq-spinner" /> processing
+                </>
+              ) : mode === "login" ? (
+                <>
+                  Sign in <span aria-hidden="true">→</span>
+                </>
+              ) : (
+                <>
+                  Create account <span aria-hidden="true">→</span>
+                </>
+              )}
             </button>
+          </div>
+
+          <div className="sq-footer">
+            <div className="sq-footer-dot" />
+            <span className="sq-footer-text">
+              {mode === "login"
+                ? "No account? Switch to register above."
+                : "Already have an account? Switch to login above."}
+            </span>
           </div>
         </div>
       </div>
