@@ -1,35 +1,33 @@
 <!-- # SmartQueue — AI-Powered Adaptive Task Scheduler -->
 
-<table border="0" cellspacing="0" cellpadding="0">
-  <tr>
-    <td width="140" valign="middle">
-      <img src="./logo.png" alt="RavenMQ Logo" width="120" />
-    </td>
-    <td valign="middle" style="padding-left: 16px;">
-      <h1>RavenMQ- AI Powered Distributed Task Scheduler</h1>
-      <!-- <p>AI-powered distributed task scheduler with LSTM priority prediction, leader election, exactly-once execution semantics, and Kubernetes autoscaling.</p> -->
-      <p>
-        <img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License" />
-        <img src="https://img.shields.io/badge/python-3.12-blue?style=flat-square&logo=python&logoColor=white" alt="Python" />
-        <img src="https://img.shields.io/badge/typescript-5.x-blue?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
-        <img src="https://img.shields.io/badge/next.js-15-black?style=flat-square&logo=next.js&logoColor=white" alt="Next.js" />
-        <img src="https://img.shields.io/badge/postgresql-16-336791?style=flat-square&logo=postgresql&logoColor=white" alt="PostgreSQL" />
-        <img src="https://img.shields.io/badge/docker-ready-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker" />
-        <img src="https://img.shields.io/badge/kubernetes-orchestrated-326CE5?style=flat-square&logo=kubernetes&logoColor=white" alt="Kubernetes" />
-        <img src="https://img.shields.io/github/actions/workflow/status/AkZcH/RavenMQ/ci.yml?style=flat-square&label=CI%2FCD" alt="CI/CD" />
-      </p>
-      <blockquote>> Final Year Project | B.Tech Computer Science & Engineering
-> Akshat Chauhan | Kalinga Institute of Industrial Technology (KIIT)</blockquote>
-    </td>
-  </tr>
-</table>
+<div align="center">
 
----
+## RavenMQ - AI-Powered Adaptive Task Scheduler
+
+  <img src="./logo.png" alt="RavenMQ Logo" width="600" />
+
+  <p>
+    <img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License" />
+    <img src="https://img.shields.io/badge/python-3.12-blue?style=flat-square&logo=python&logoColor=white" alt="Python" />
+    <img src="https://img.shields.io/badge/typescript-5.x-blue?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
+    <img src="https://img.shields.io/badge/next.js-15-black?style=flat-square&logo=next.js&logoColor=white" alt="Next.js" />
+    <img src="https://img.shields.io/badge/postgresql-16-336791?style=flat-square&logo=postgresql&logoColor=white" alt="PostgreSQL" />
+    <img src="https://img.shields.io/badge/docker-ready-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker" />
+    <img src="https://img.shields.io/badge/kubernetes-orchestrated-326CE5?style=flat-square&logo=kubernetes&logoColor=white" alt="Kubernetes" />
+    <img src="https://img.shields.io/github/actions/workflow/status/AkZcH/RavenMQ/ci.yml?style=flat-square&label=CI%2FCD" alt="CI/CD" />
+  </p>
 
 > Final Year Project | B.Tech Computer Science & Engineering
 > Akshat Chauhan | Kalinga Institute of Industrial Technology (KIIT)
 
----
+</div>
+
+<!-- > Final Year Project | B.Tech Computer Science & Engineering
+> Akshat Chauhan | Kalinga Institute of Industrial Technology (KIIT) -->
+
+<!-- <div align="center">
+  <img src="./logo.png" alt="RavenMQ Logo" width="600" />
+</div> -->
 
 ## Table of Contents
 
