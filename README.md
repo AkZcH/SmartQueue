@@ -1,4 +1,4 @@
-# 🐦‍⬛SmartQueue- AI-Powered Adaptive Task Scheduler
+# 🐦‍⬛ RavenMQ- AI-Powered Adaptive Task Scheduler
 
 <div align="center">
 
@@ -14,7 +14,7 @@
     <img src="https://img.shields.io/badge/postgresql-16-336791?style=flat-square&logo=postgresql&logoColor=white" alt="PostgreSQL" />
     <img src="https://img.shields.io/badge/docker-ready-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker" />
     <img src="https://img.shields.io/badge/kubernetes-orchestrated-326CE5?style=flat-square&logo=kubernetes&logoColor=white" alt="Kubernetes" />
-    <img src="https://img.shields.io/github/actions/workflow/status/AkZcH/RavenMQ/ci.yml?style=flat-square&label=CI%2FCD" alt="CI/CD" />
+    <!-- <img src="https://img.shields.io/github/actions/workflow/status/AkZcH/RavenMQ/ci.yml?style=flat-square&label=CI%2FCD" alt="CI/CD" /> -->
   </p>
 
 > Final Year Project | B.Tech Computer Science & Engineering
