@@ -1,10 +1,10 @@
-<!-- # SmartQueue — AI-Powered Adaptive Task Scheduler -->
+# 🐦‍⬛SmartQueue- AI-Powered Adaptive Task Scheduler
 
 <div align="center">
 
-## RavenMQ - AI-Powered Adaptive Task Scheduler
+<!-- ## RavenMQ - AI-Powered Adaptive Task Scheduler -->
 
-  <img src="./logo.png" alt="RavenMQ Logo" width="600" />
+  <img src="./banner.png" alt="RavenMQ Logo"/>
 
   <p>
     <img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License" />
